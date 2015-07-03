@@ -19,7 +19,7 @@ ENV KIBANA_VERSION kibana-4.1.1-linux-x64
 RUN apt-get update && apt-get -y upgrade
 
 # Install dependencies
-RUN apt-get install -y sudo wget curl tar apt-utils libcurl4-openssl-dev make net-tools
+RUN apt-get install -y sudo net-tools apt-utils wget curl tar libcurl4-openssl-dev make
 # ... ruby ruby-dev
 
 # Clean cache files
@@ -39,18 +39,6 @@ VOLUME ["/data"]
 # Mount elasticsearch.yml config
 ADD config/elasticsearch.yml /elasticsearch/config/elasticsearch.yml
 
-# Define working directory.
-WORKDIR /data
-
-# Define default command.
-CMD ["/elasticsearch/bin/elasticsearch"]
-
-# Expose ports.
-#   - 9200: HTTP
-#   - 9300: transport
-EXPOSE 9200
-EXPOSE 9300
-
 # Install Kibana
 RUN cd / && \
   wget https://download.elastic.co/kibana/kibana/$KIBANA_VERSION.tar.gz && \
@@ -62,11 +50,23 @@ RUN cd / && \
 ADD config/kibana.yml /kibana/config/kibana.yml
 
 # Define default command.
+RUN /elasticsearch/bin/elasticsearch -d
+
+# Expose ports.
+#   - 9200: HTTP
+#   - 9300: transport
+EXPOSE 9200
+EXPOSE 9300
+
+# Define default command.
 CMD ["/kibana/bin/kibana"]
 
 # Expose ports.
 #   - 5601: HTTP
 EXPOSE 5601
+
+# Define working directory.
+WORKDIR /data
 
 # Install td-agent(fluentd)
 #RUN curl -L http://toolbelt.treasuredata.com/sh/install-ubuntu-trusty-td-agent2.sh | sh
