@@ -20,7 +20,12 @@ RUN apt-get update && apt-get -y upgrade
 
 # Install dependencies
 RUN apt-get install -y sudo net-tools apt-utils wget curl tar libcurl4-openssl-dev make
-# ... ruby ruby-dev
+
+# Install supervisord
+RUN apt-get install -y supervisor
+
+# Mount supervisord configuration
+ADD config/supervisord.conf /etc/supervisord.conf
 
 # Clean cache files
 RUN apt-get clean && rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
@@ -36,7 +41,7 @@ RUN \
 # Define mountable directories.
 VOLUME ["/data"]
 
-# Mount elasticsearch.yml config
+# Mount elasticsearch configuration
 ADD config/elasticsearch.yml /elasticsearch/config/elasticsearch.yml
 
 # Install Kibana
@@ -44,24 +49,19 @@ RUN cd / && \
   wget https://download.elastic.co/kibana/kibana/$KIBANA_VERSION.tar.gz && \
   tar xvzf $KIBANA_VERSION.tar.gz && \
   rm -f $KIBANA_VERSION.tar.gz && \
-  mv /$KIBANA_VERSION /kibana
+  mv /$KIBANA_VERSION /kibana && \
+  mkdir /var/log/kibana
 
-# Mount kibana.yml config
+# Mount kibana configuration
 ADD config/kibana.yml /kibana/config/kibana.yml
 
-# Define default command.
-RUN /elasticsearch/bin/elasticsearch -d
-
-# Expose ports.
+# Expose ports for elasticsearch
 #   - 9200: HTTP
 #   - 9300: transport
 EXPOSE 9200
 EXPOSE 9300
 
-# Define default command.
-CMD ["/kibana/bin/kibana"]
-
-# Expose ports.
+# Expose ports for kibana
 #   - 5601: HTTP
 EXPOSE 5601
 
@@ -73,3 +73,6 @@ WORKDIR /data
 
 # Install plugins for fluentd
 #RUN /opt/td-agent/embedded/bin/fluent-gem install fluent-plugin-elasticsearch --no-ri --no-rdoc
+
+
+CMD /usr/bin/supervisord -c /etc/supervisord.conf
