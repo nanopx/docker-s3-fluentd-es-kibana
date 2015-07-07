@@ -1,7 +1,6 @@
 #!/bin/bash
 # @author nanopx
 
-
 # build image
 echo "Building docker image..."
 docker build -t nanopx/s3-log-viewer .
